@@ -1012,9 +1012,9 @@ async function sendChat(){
     const d = await res.json();
     const reply = d.content?.find(c=>c.type==='text')?.text || '…';
     chatHistory.push({ role:'assistant', content:reply });
-    document.getElementById(lid)?.querySelector('.mac').innerHTML = reply.replace(/\n/g,'<br>');
+    const el = document.getElementById(lid); if(el) el.querySelector('.mac').innerHTML = reply.replace(/\n/g,'<br>');
   } catch(e){
-    document.getElementById(lid)?.querySelector('.mac').textContent = 'Erreur : '+e.message;
+    const el2 = document.getElementById(lid); if(el2) el2.querySelector('.mac').textContent = 'Erreur : '+e.message;
   }
   msgs.scrollTop = msgs.scrollHeight;
 }
