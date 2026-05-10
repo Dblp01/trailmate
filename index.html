@@ -244,11 +244,14 @@ select.fi{cursor:pointer}
   <div class="setup-box">
     <div class="setup-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#0d1a00" stroke-width="2.5" stroke-linecap="round"><path d="M3 17l5-10 4 7 3-4 4 7"/></svg></div>
     <h2>TrailMate</h2>
-    <p>Bienvenue ! Clique ci-dessous pour accéder à TrailMate.<br><span style="font-size:11px;color:var(--text3)">L'IA est gérée côté serveur via Netlify.</span></p>
+    <p>Entre ta clé API Anthropic pour activer le coach IA.</p>
     <div class="setup-err" id="setup-err">Clé invalide — doit commencer par sk-ant</div>
-
+    <div class="setup-field" style="margin-bottom:12px">
+      <label style="display:block;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px">Clé API Anthropic</label>
+      <input class="setup-input" id="api-key-input" type="password" placeholder="sk-ant-api03-…" autocomplete="off" onkeydown="if(event.key==='Enter')saveKey()">
+    </div>
     <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px;font-size:13px;margin-top:4px" onclick="saveKey()">
-🏔️ Accéder à TrailMate
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg> Accéder à TrailMate
     </button>
     <div class="setup-note">🔒 Clé stockée localement dans ton navigateur.</div>
   </div>
@@ -537,7 +540,8 @@ window.onload = () => {
     return;
   }
 
-  // Always show setup first, button calls showApp directly
+  const k = localStorage.getItem('tm_api_key');
+  if(k){ showApp(); return; }
 
   document.getElementById('s-date').value = tod();
   document.getElementById('r-date').value = tod();
@@ -550,6 +554,12 @@ window.onload = () => {
 function tod(){ return new Date().toISOString().split('T')[0]; }
 
 function saveKey(){
+  const k = document.getElementById('api-key-input').value.trim();
+  if(!k.startsWith('sk-ant')){
+    document.getElementById('setup-err').style.display='block';
+    return;
+  }
+  localStorage.setItem('tm_api_key', k);
   showApp();
 }
 
@@ -1006,7 +1016,7 @@ async function sendChat(){
   try{
     const res = await fetch('/.netlify/functions/claude', {
       method:'POST',
-      headers:{ 'Content-Type':'application/json' },
+      headers:{ 'Content-Type':'application/json','x-api-key':localStorage.getItem('tm_api_key')||'','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
       body: JSON.stringify({ model:'claude-sonnet-4-5', max_tokens:1500, system:getSys(), messages:chatHistory })
     });
     const d = await res.json();
@@ -1059,7 +1069,7 @@ async function exchangeStravaCode(code){
   try{
     const res = await fetch('/.netlify/functions/strava-token', {
       method:'POST',
-      headers:{ 'Content-Type':'application/json' },
+      headers:{ 'Content-Type':'application/json','x-api-key':localStorage.getItem('tm_api_key')||'','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true' },
       body: JSON.stringify({ client_id:clientId, client_secret:clientSecret, code, grant_type:'authorization_code' })
     });
     const d = await res.json();
