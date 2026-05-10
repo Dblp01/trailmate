@@ -537,9 +537,7 @@ window.onload = () => {
     return;
   }
 
-  // Auto-enter if already visited once
-  if(localStorage.getItem('tm_visited')){ showApp(); return; }
-  localStorage.setItem('tm_visited','1');
+  // Always show setup first, button calls showApp directly
 
   document.getElementById('s-date').value = tod();
   document.getElementById('r-date').value = tod();
