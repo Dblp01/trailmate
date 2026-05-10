@@ -669,11 +669,10 @@ async function generatePlan(){
   const half  = Math.ceil(weeks / 2);
   const SYS   = 'Réponds UNIQUEMENT avec du JSON valide et complet. Aucun texte avant ou après. Aucun backtick markdown.';
 
-  function mkPrompt(from, to, withMeta){
-    const meta = withMeta ? `"resume":"stratégie globale en 2 phrases","phases":[{"nom":"Phase - Nom","semaines":"X-Y","objectif":"..."}],` : '';
+  function mkPrompt(from, to){
     return `Plan trail JSON. Course:${race} ${dist||'?'}km ${elev||'?'}m+ le ${date}. Niveau:${level}. ${dpw} séances/sem. Objectif:${goal||'finisher'}.
-Génère les semaines ${from} à ${to} (total ${weeks} semaines). JSON EXACT sans texte autour:
-{${meta}"semaines":[{"numero":${from},"phase":"Base","volume_km":40,"denivele_m":600,"focus":"Endurance","seances":[{"jour":"Mar","type":"Endurance fondamentale","duree":"50min","distance_km":10,"denivele_m":100,"zone":"Z2","description":"Footing facile FC<140bpm","conseil":"Reste en Z2"}]}]}
+Génère les semaines ${from} à ${to}. JSON EXACT sans texte autour:
+{"semaines":[{"numero":${from},"phase":"Base","volume_km":40,"denivele_m":600,"focus":"Endurance","seances":[{"jour":"Mar","type":"Endurance fondamentale","duree":"50min","distance_km":10,"denivele_m":100,"zone":"Z2","description":"Footing facile FC<140bpm","conseil":"Reste en Z2"}]}]}
 Types: Endurance fondamentale|Sortie longue|Fractionné|Côtes|Tempo|Récupération. EXACTEMENT ${dpw} séances par semaine. JSON minifié.`;
   }
 
@@ -693,7 +692,7 @@ Types: Endurance fondamentale|Sortie longue|Fractionné|Côtes|Tempo|Récupérat
 
     const d1 = extract(r1);
     const d2 = extract(r2);
-    if(!d1 || !d1.semaines?.length) throw new Error('Partie 1 invalide — réessaie');
+    if(!d1?.semaines?.length) throw new Error('Partie 1 invalide — réessaie');
 
     const planData = {
       resume:   d1.resume  || `Plan ${weeks} semaines pour ${race}.`,
@@ -701,14 +700,24 @@ Types: Endurance fondamentale|Sortie longue|Fractionné|Côtes|Tempo|Récupérat
       semaines: [...d1.semaines, ...(d2?.semaines || [])]
     };
 
+    if(!d2?.semaines?.length) {
+      msgEl.textContent = `⚠️ Semaines ${half+1}–${weeks} partielles — plan sauvegardé avec ${d1.semaines.length} semaines. Clique "Voir" pour consulter.`;
+    }
+
     DB.plans.push({ id:Date.now(), name, race, date, dist, elev, level, dpw, goal, data:planData, createdAt:new Date().toISOString() });
     save('plans');
     renderAll();
-    closeModal('modal-plan');
-    ['p-name','p-race','p-date','p-dist','p-elev','p-goal'].forEach(id => document.getElementById(id).value = '');
-    genBox.style.display = 'none';
-    btn.disabled = false;
-    go('plans');
+
+    if(d2?.semaines?.length){
+      closeModal('modal-plan');
+      ['p-name','p-race','p-date','p-dist','p-elev','p-goal'].forEach(id => document.getElementById(id).value = '');
+      genBox.style.display = 'none';
+      btn.disabled = false;
+      go('plans');
+    } else {
+      btn.disabled = false;
+      btn.innerHTML = '✓ Plan partiel sauvegardé — voir dans Plans';
+    }
   } catch(e){
     msgEl.textContent = '❌ Erreur : ' + (e.message || e);
     btn.disabled = false;
