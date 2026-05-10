@@ -1,11 +1,3 @@
 [build]
-  publish = "."
-  functions = "netlify/functions"
-
-[functions]
-  timeout = 26
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    Access-Control-Allow-Origin = "*"
+publish = "."
+functions = "netlify/functions"
